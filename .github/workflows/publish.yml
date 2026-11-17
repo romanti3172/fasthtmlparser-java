@@ -1,0 +1,54 @@
+name: Publish
+
+# Publishes to Maven Central on a version tag (v0.1.1) or by hand from the Actions tab.
+# Secrets: MAVEN_CENTRAL_USERNAME / MAVEN_CENTRAL_PASSWORD (a user token from central.sonatype.com),
+# GPG_PRIVATE_KEY (armored) and GPG_PASSPHRASE.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+          server-id: central
+          server-username: MAVEN_CENTRAL_USERNAME
+          server-password: MAVEN_CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: The tag matches the version in pom.xml
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version=$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME, pom.xml version $version"
+            exit 1
+          fi
+
+      - name: Not published yet
+        run: |
+          version=$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)
+          status=$(curl -s -o /dev/null -w '%{http_code}' "https://repo1.maven.org/maven2/io/github/romanti3172/fasthtmlparser/$version/fasthtmlparser-$version.pom")
+          if [ "$status" = "200" ]; then
+            echo "::error::fasthtmlparser $version is already on Maven Central"
+            exit 1
+          fi
+
+      # the tests run again; the artifacts are signed and uploaded, and the job waits until they are published
+      - run: mvn -B -P release deploy
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
