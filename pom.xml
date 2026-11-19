@@ -16,7 +16,7 @@
 
   <licenses>
     <license>
-      <name>z3l.FastHtmlParser License (source-available)</name>
+      <name>LicenseRef-z3l-FastHtmlParser</name>
       <url>https://github.com/romanti3172/fasthtmlparser-java/blob/main/LICENSE.md</url>
       <distribution>repo</distribution>
     </license>
