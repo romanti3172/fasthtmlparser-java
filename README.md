@@ -17,12 +17,12 @@ The whole API is ported: the parser, attributes, HTML5 entities, visible text an
 <dependency>
   <groupId>io.github.romanti3172</groupId>
   <artifactId>fasthtmlparser</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
 </dependency>
 ```
 
 ```kotlin
-implementation("io.github.romanti3172:fasthtmlparser:0.1.0")
+implementation("io.github.romanti3172:fasthtmlparser:0.1.1")
 ```
 
 No dependencies. Java 17 or later. Module name `io.github.romanti3172.fasthtmlparser`.
