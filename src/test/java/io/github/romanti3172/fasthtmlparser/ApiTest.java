@@ -163,6 +163,7 @@ class ApiTest {
         assertThrows(CssSelectorException.class, () -> CssQuery.compile("::before"));
         XPathException xpath = assertThrows(XPathException.class, () -> doc.xpath("//p["));
         assertTrue(xpath.getMessage().contains("\"//p[\""), xpath.getMessage());
+        assertTrue(xpath.getMessage().contains("unexpected end of the expression"), xpath.getMessage());
         assertThrows(XPathException.class, () -> XPathQuery.compile("$var"));
         assertThrows(IllegalArgumentException.class, () -> doc.xpath("//p[unknown()]"));
     }

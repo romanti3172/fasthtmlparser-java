@@ -1887,7 +1887,8 @@ public final class XPathQuery {
                 absolute = true;
                 steps = parseRelativeSteps(steps, true);
             } else {
-                if (!canStartStep(peek(0))) throw fail("unexpected " + describe(peek(0)));
+                if (!canStartStep(peek(0)))
+                    throw fail(peek(0).kind == T_END ? "unexpected end of the expression" : "unexpected " + describe(peek(0)));
                 steps = parseRelativeSteps(steps, false);
             }
             return new PathExpr(null, absolute, optimize(steps));
