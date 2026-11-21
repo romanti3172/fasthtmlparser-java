@@ -546,7 +546,10 @@ final class Parser {
             setNode(index, new HtmlNode(doc, index, parent, key, customName, tagStart - 1, gt, gt + 1, depth));
 
             // Void elements (<br>, <img>, <meta>, ...) and declarations never contain anything.
-            boolean isVoid = !isXml && key >= 0 && VOID_TAGS[key];
+            // Neither does markup named "!..." or "?..." (<!doctype>, <?xml ...?>, <?php ...?>, <![if IE]>), in HTML
+            // and in XML alike: a bogus comment in a browser, a declaration or processing instruction in XML. The name
+            // starts with an ASCII letter, '!' or '?' (isMarkupStart), and '!' and '?' sort before the letters: one compare.
+            boolean isVoid = src.charAt(tagStart) <= '?' || (!isXml && key >= 0 && VOID_TAGS[key]);
             boolean selfClosing = isVoid;
             if (!selfClosing) {
                 int e = gt;
