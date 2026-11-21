@@ -96,6 +96,28 @@ class ApiTest {
         assertNull(doc.cssFirst("div").parent(), "<div> ends an open <p>");
     }
 
+    /** text() is the visible text in one line, as jsoup's text() (the cases of TextOneLineTests in the .NET version). */
+    @Test
+    void textIsOneLine() {
+        String[][] cases = {
+            {"line1<br>line2", "line1 line2"}, {"line1<br><br><br>line2", "line1 line2"}, {"line1 <br> line2", "line1 line2"},
+            {"line1<BR/>line2", "line1 line2"}, {"<p>a</p><p>b</p>", "a b"}, {"<ul><li>a</li><li>b</li></ul>", "a b"},
+            {"<table><tr><td>Price</td><td>100</td></tr></table>", "Price 100"}, {"<h1>Title</h1>text", "Title text"},
+            {"a<span>b</span>c", "abc"}, {"a<my-widget>b</my-widget>", "ab"}, {"a\nb", "a b"}, {"a\r\n\t  b", "a b"},
+            {"a<!-- c -->b", "ab"}, {"<p>a</p><script>x()</script><p>b</p>", "a b"}, {"a &amp; b", "a & b"},
+            {"x<pre>a\n  b</pre>y", "x a\n  b y"},
+        };
+        for (String[] c : cases) {
+            HtmlDocument doc = HtmlDocument.parse("<div>" + c[0] + "</div>");
+            assertEquals(c[1], doc.cssFirst("div").text(), c[0]);
+            assertEquals(1, doc.findAll(Query.by(Tag.DIV).text(c[1])).size(), "text query " + c[0]);
+        }
+        HtmlDocument doc = HtmlDocument.parse("<span>a\n   b</span><pre>c\n  d</pre><textarea>e\n  f</textarea>");
+        assertEquals("a b", doc.cssFirst("span").text());
+        assertEquals("c\n  d", doc.cssFirst("pre").text());
+        assertEquals("e\n  f", doc.cssFirst("textarea").text());
+    }
+
     @Test
     void textEntitiesRawTextAndComments() {
         HtmlDocument doc = HtmlDocument.parse("<div> a &amp;&nbsp;b <script>var x = \"<b>\";</script><!-- c --> <i>d</i>&copy2024 </div>"
@@ -103,7 +125,7 @@ class ApiTest {
         assertEquals("a & b d©2024", doc.cssFirst("div").text(), "&nbsp; is a no-break space");
         assertEquals("a < b", doc.cssFirst("title").text());
         assertEquals(" c ", doc.xpathValue("//comment()"));
-        assertEquals("onetwo three", Html.toText("<p>one</p><p>two&nbsp;three</p>"));
+        assertEquals("one two three", Html.toText("<p>one</p><p>two&nbsp;three</p>")); // paragraphs separate words, as in jsoup
         assertEquals("one\n\ntwo\nthree\n\nx y", Html.toTextLineBreaks("<p>one</p><p>two<br>three</p><td>x</td><td>y</td>"));
         assertEquals("<AB&bogus;", Html.decode("&lt;&#x41;&#66;&bogus;"));
     }

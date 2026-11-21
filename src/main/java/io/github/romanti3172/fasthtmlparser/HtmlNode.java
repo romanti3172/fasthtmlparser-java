@@ -90,14 +90,33 @@ public final class HtmlNode {
     }
 
     /**
-     * The visible text with entities decoded. With child tags: tags, comments and the content of script, style,
-     * noscript, template, noframes, noembed removed, whitespace collapsed; without: the inner text as is (trimmed).
+     * The visible text in one line with entities decoded, as jsoup's {@code text()}: tags, comments and the content of
+     * script, style, noscript, template, noframes, noembed removed; {@code <br>}, block elements and table cells
+     * separate words ("a<br>b": "a b"), inline tags do not ("a<b>b</b>": "ab"); whitespace, line breaks included,
+     * collapsed to one space and trimmed. Inside {@code <pre>} whitespace is kept; script, style, textarea, title, ...
+     * are their content as written.
      */
     public String text() {
         String body = body();
-        // No child tags and no '<' at all: the body is the text, except in script, style, textarea, title, ...
-        if (!hasChildren() && (body.indexOf('<') < 0 || Parser.isRawText(key))) return Decode.decode(body, false);
-        return Text.clearTags(body);
+        boolean leaf = !hasChildren();
+        // script, style, textarea, title, ... without child tags: their content is text as written
+        if (leaf && Parser.isRawText(key)) return Decode.decode(body, false);
+        // no child tags, no '<' and no whitespace to collapse: the body is the text
+        boolean plain = leaf && body.indexOf('<') < 0;
+        if (plain && !Text.needsCollapse(body)) return Decode.decode(body, false);
+        // <pre> and what is in it keep their whitespace (looked up only when there is whitespace to keep)
+        boolean inPre = inPre();
+        if (plain && inPre) return Decode.decode(body, false);
+        return Text.clearTags(body, inPre);
+    }
+
+    /** Whether the tag is pre, listing or plaintext, or inside one. */
+    boolean inPre() {
+        if (!document.hasPre()) return false;
+        for (HtmlNode t = this; t != null; t = t.parent()) {
+            if (t.key == Tag.PRE.ordinal() || t.key == Tag.LISTING.ordinal() || t.key == Tag.PLAINTEXT.ordinal()) return true;
+        }
+        return false;
     }
 
     /**

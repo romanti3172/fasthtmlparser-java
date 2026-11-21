@@ -35,6 +35,15 @@ final class TextLines {
         }
     }
 
+    /**
+     * Whether the tag (an ordinal of {@link Tag}) separates words in the one-line text of {@code text()}, as in jsoup's
+     * {@code text()}: {@code <br>}, block elements, p/h1-h6 and table cells. The same tags as the line breaks here.
+     */
+    static boolean separatesWords(int tag) {
+        byte k = KINDS[tag];
+        return k == BREAK_LINE || k == BREAK_PARAGRAPH || k == BREAK_SPACE;
+    }
+
     /** Writes text, collapsing whitespace and turning requested breaks into trimmed lines. */
     private static final class LineWriter {
         final StringBuilder out = new StringBuilder();

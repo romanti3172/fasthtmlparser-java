@@ -25,6 +25,9 @@ public final class HtmlDocument implements Iterable<HtmlNode> {
     private final String source;
     private final String url;
     final HtmlNode[] nodes;
+    // 0: not looked up, 1: no pre, listing or plaintext in the page, 2: there is one (see hasPre). A race only
+    // computes the same answer twice.
+    private volatile int hasPre;
     private final List<HtmlNode> nodeList;
     /** the page URL parsed once, for resolving relative links */
     final Links.Url base;
@@ -79,6 +82,23 @@ public final class HtmlDocument implements Iterable<HtmlNode> {
     }
 
     /** The number of tags (comments included). */
+    /** Whether the page has a pre, listing or plaintext, looked up once: most pages have none, and then text() does
+     * not look for one around each tag. */
+    boolean hasPre() {
+        int v = hasPre;
+        if (v == 0) {
+            v = 1;
+            for (HtmlNode n : nodes) {
+                if (n.key == Tag.PRE.ordinal() || n.key == Tag.LISTING.ordinal() || n.key == Tag.PLAINTEXT.ordinal()) {
+                    v = 2;
+                    break;
+                }
+            }
+            hasPre = v;
+        }
+        return v == 2;
+    }
+
     public int size() {
         return nodes.length;
     }
