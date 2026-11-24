@@ -149,8 +149,9 @@ final class Text {
                     i++;
                     continue;
                 }
+                // not after whitespace kept as written inside <pre>
                 if (pendingSpace) {
-                    out.append(' ');
+                    if (!Chars.isUnicodeSpace(out.charAt(out.length() - 1))) out.append(' ');
                     pendingSpace = false;
                 }
                 run = i;
